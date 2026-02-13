@@ -8,14 +8,18 @@ enum SearchQuery {
     case year(Int)
 }
 
-enum BookShelfError: Error {
-    case duplicateID
+enum BookShelfError: Error, LocalizedError {
     case bookNotFound
-    case invalidInput(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .bookNotFound: return "Book not found"
+        }
+    }
 }
 
 protocol BookShelfProtocol {
-    func add(_ book: Book) throws
+    func add(title: String, author: String, year: Int?, genre: Genre, tags: [String]) throws
     func delete(byID: String) throws
     func list() -> [Book]
     func search(_ query: SearchQuery) throws -> [Book]
@@ -24,23 +28,13 @@ protocol BookShelfProtocol {
 class BookShelf: BookShelfProtocol {
     private var books: [String: Book] = [:]
     
-    func add(_ book: Book) throws {
-        guard books[book.id] == nil else {
-            throw BookShelfError.duplicateID
-        }
+    func add(title: String, author: String, year: Int?, genre: Genre, tags: [String]) throws {
         
-        guard !book.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !book.author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw BookShelfError.invalidInput("Title or Author cannot be empty")
-        }
+        let title = try BookValidator.validateTitle(title)
+        let author = try BookValidator.validateAuthor(author)
+        let year = try BookValidator.validateYear(year)
         
-        guard book.publicationYear ?? 0 >= 0 else {
-            throw BookShelfError.invalidInput("Publication year must be a non-negative integer")
-        }
-        
-        guard Genre.allCases.contains(book.genre) else {
-            let genreNames = Genre.allCases.map { $0.rawValue }.joined(separator: ", ")
-            throw BookShelfError.invalidInput("Genre must be one of following: \(genreNames)")
-        }
+        let book = Book(id: UUID().uuidString, title: title, author: author, year: year, genre: genre, tags: tags)
         
         books[book.id] = book
     }
@@ -62,28 +56,22 @@ class BookShelf: BookShelfProtocol {
         
         switch query {
         case .title(let title):
-            guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw BookShelfError.invalidInput("Title cannot be empty")
-            }
-            return allBooks.filter { $0.title.lowercased().contains(title.lowercased()) }
+            let validTitle = try BookValidator.validateTitle(title)
+            return allBooks.filter { $0.title.lowercased().contains(validTitle.lowercased()) }
             
         case .author(let author):
-            guard !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw BookShelfError.invalidInput("Author cannot be empty")
-            }
-            return allBooks.filter { $0.author.lowercased().contains(author.lowercased()) }
+            let validAuthor = try BookValidator.validateAuthor(author)
+            return allBooks.filter { $0.author.lowercased().contains(validAuthor.lowercased()) }
             
+        case .year(let year):
+            let validYear = try BookValidator.validateYear(year)
+            if validYear == nil { return [] }
+            return allBooks.filter { $0.year == validYear }
         case .genre(let genre):
             return allBooks.filter { $0.genre == genre }
             
         case .tag(let tag):
             return allBooks.filter { $0.tags.contains(tag) }
-            
-        case .year(let year):
-            guard year >= 0 else {
-                throw BookShelfError.invalidInput("Publication year must be a non-negative integer")
-            }
-            return allBooks.filter { $0.publicationYear == year }
         }
     }
 }

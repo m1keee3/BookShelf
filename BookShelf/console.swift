@@ -76,6 +76,7 @@ class Console {
             InputEnter()
             return
         }
+        let genre = genres[genreIndex - 1]
         
         print("Enter tags separated by comma: ", terminator: "")
         let tagsInput = readLine() ?? ""
@@ -83,20 +84,11 @@ class Console {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines)}
             .filter {!$0.isEmpty }
         
-        let book = Book(
-            id: UUID().uuidString,
-            title: title,
-            author: author,
-            publicationYear: year,
-            genre: genres[genreIndex - 1],
-            tags: tags
-        )
-        
         do {
-            try bookShelf.add(book)
+            try bookShelf.add(title: title, author: author, year: year, genre: genre, tags: tags)
             print("Book added successfully")
         } catch {
-            print("Failed to add book: \(error)")
+            print("Failed to add book: \(error.localizedDescription)")
         }
         
         InputEnter()
@@ -130,7 +122,7 @@ class Console {
         } catch BookShelfError.bookNotFound {
             print("Book with ID: \(id) not found")
         } catch {
-            print("Failed to delete book: \(error)")
+            print("Failed to delete book: \(error.localizedDescription)")
         }
         
         InputEnter()
@@ -152,7 +144,7 @@ class Console {
             print("ID: \(book.id)")
             print("Title: \(book.title)")
             print("Author: \(book.author)")
-            print("Year: \(book.publicationYear?.description ?? "-")")
+            print("Year: \(book.year?.description ?? "-")")
             print("Genre: \(book.genre.rawValue)")
             print("Tags: \(book.tags.isEmpty ? "-" : book.tags.joined(separator: ", "))")
             print()
@@ -187,7 +179,7 @@ class Console {
                 let results = try bookShelf.search(.title(readLine() ?? ""))
                 printSearchResult(results)
             } catch {
-                print("Failed to search by title: \(error)")
+                print("Failed to search by title: \(error.localizedDescription)")
             }
             InputEnter()
             
@@ -198,7 +190,7 @@ class Console {
                 let results = try bookShelf.search(.author(readLine() ?? ""))
                 printSearchResult(results)
             } catch {
-                print("Failed to search by author: \(error)")
+                print("Failed to search by author: \(error.localizedDescription)")
             }
             InputEnter()
             
@@ -219,7 +211,7 @@ class Console {
                 let results = try bookShelf.search(.genre(genres[index - 1]))
                 printSearchResult(results)
             } catch {
-                print("Failed to search by genre: \(error)")
+                print("Failed to search by genre: \(error.localizedDescription)")
             }
             InputEnter()
             
@@ -230,7 +222,7 @@ class Console {
                 let results = try bookShelf.search(.tag(readLine() ?? ""))
                 printSearchResult(results)
             } catch {
-                print("Failed to search by tag: \(error)")
+                print("Failed to search by tag: \(error.localizedDescription)")
             }
             InputEnter()
             
@@ -251,7 +243,7 @@ class Console {
                 let results  = try bookShelf.search(.year(year))
                 printSearchResult(results)
             } catch {
-                print("Failed to search by year: \(error)")
+                print("Failed to search by year: \(error.localizedDescription)")
             }
             
             InputEnter()
@@ -275,7 +267,7 @@ class Console {
             print("ID: \(book.id)")
             print("Title: \(book.title)")
             print("Author: \(book.author)")
-            print("Year: \(book.publicationYear?.description ?? "-")")
+            print("Year: \(book.year?.description ?? "-")")
             print("Genre: \(book.genre.rawValue)")
             print("Tags: \(book.tags.isEmpty ? "-" : book.tags.joined(separator: ", "))")
             print()

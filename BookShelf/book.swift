@@ -6,7 +6,7 @@ struct Book: Identifiable, Equatable, Codable {
     let id: String
     var title: String
     var author: String
-    var publicationYear: Int?
+    var year: Int?
     var genre: Genre
     var tags: [String]
 }
